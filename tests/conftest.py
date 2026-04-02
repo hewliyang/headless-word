@@ -49,7 +49,9 @@ def docx_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def populated_session(docx_path: Path, cli_env: dict[str, str]) -> Iterator[dict[str, str]]:
+def populated_session(
+    docx_path: Path, cli_env: dict[str, str]
+) -> Iterator[dict[str, str]]:
     new_result = run_cli("new", str(docx_path), env=cli_env)
     session_id = json.loads(new_result.stdout)["session_id"]
 
