@@ -5,7 +5,13 @@ Word document automation via LibreOffice for headless environments.
 ## Install
 
 ```bash
-pip install headless-word
+uv tool install headless-word
+```
+
+## Claude Code Skill
+
+```bash
+npx skills add hewliyang/headless-word
 ```
 
 ## Requirements
