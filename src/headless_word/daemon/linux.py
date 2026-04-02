@@ -10,6 +10,7 @@ from pathlib import Path
 from headless_word.daemon.base import (
     PID_FILE,
     cleanup_daemon_files,
+    get_soffice_path,
     is_daemon_running,
     send_daemon_command,
 )
@@ -21,24 +22,54 @@ def _get_helper_script_path() -> Path:
     return Path(__file__).parent / "linux_helper.py"
 
 
-def _check_uno_available() -> bool:
+def _find_uno_python() -> str:
+    """Find a Python interpreter that can import the ``uno`` module.
+
+    Preference order:
+    1. LibreOffice's bundled Python (same build as the UNO C++ bridge –
+       avoids version-mismatch crashes such as
+       "Binary URP bridge disposed during call").
+    2. The system ``/usr/bin/python3`` (works when the distro ships
+       ``python3-uno`` built against the system Python).
+
+    Returns the absolute path to the interpreter, or raises ``DaemonError``.
+    """
+    # --- 1. Try the bundled Python next to soffice ---
+    soffice = get_soffice_path()
+    if soffice:
+        lo_dir = Path(soffice).resolve().parent  # …/program/
+        lo_python = lo_dir / "python"
+        if lo_python.is_file():
+            try:
+                r = subprocess.run(
+                    [str(lo_python), "-c", "import uno"],
+                    capture_output=True, timeout=5,
+                )
+                if r.returncode == 0:
+                    return str(lo_python)
+            except Exception:
+                pass
+
+    # --- 2. Fall back to system Python ---
     try:
-        result = subprocess.run(
+        r = subprocess.run(
             ["/usr/bin/python3", "-c", "import uno"],
-            capture_output=True,
-            timeout=5,
+            capture_output=True, timeout=5,
         )
-        return result.returncode == 0
+        if r.returncode == 0:
+            return "/usr/bin/python3"
     except Exception:
-        return False
+        pass
+
+    raise DaemonError(
+        "No Python with UNO bindings found.\n"
+        "Either install python3-uno (sudo apt install python3-uno) "
+        "or ensure LibreOffice ships a bundled Python."
+    )
 
 
 def start_daemon_linux(wait: bool, timeout: float) -> int:
-    if not _check_uno_available():
-        raise DaemonError(
-            "python3-uno is required on Linux.\n"
-            "Install it with: sudo apt install python3-uno"
-        )
+    uno_python = _find_uno_python()
 
     helper_path = _get_helper_script_path()
     if not helper_path.exists():
@@ -52,7 +83,7 @@ def start_daemon_linux(wait: bool, timeout: float) -> int:
     env["HEADLESS_WORD_IDLE_TIMEOUT"] = str(config.idle_timeout)
 
     proc = subprocess.Popen(
-        ["/usr/bin/python3", str(helper_path)],
+        [uno_python, str(helper_path)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         start_new_session=True,

@@ -72,18 +72,20 @@ def connect_uno(retries=30, delay=0.5):
     import uno
     from com.sun.star.connection import NoConnectException
 
-    local_ctx = uno.getComponentContext()
-    resolver = local_ctx.ServiceManager.createInstanceWithContext(
-        "com.sun.star.bridge.UnoUrlResolver", local_ctx
-    )
     for _ in range(retries):
         try:
+            local_ctx = uno.getComponentContext()
+            resolver = local_ctx.ServiceManager.createInstanceWithContext(
+                "com.sun.star.bridge.UnoUrlResolver", local_ctx
+            )
             ctx = resolver.resolve(
                 f"uno:socket,host={UNO_HOST},port={UNO_PORT};urp;StarOffice.ComponentContext"
             )
             smgr = ctx.ServiceManager
             return smgr.createInstanceWithContext("com.sun.star.frame.Desktop", ctx)
         except NoConnectException:
+            time.sleep(delay)
+        except Exception:
             time.sleep(delay)
     raise RuntimeError("Failed to connect to LibreOffice via UNO")
 
