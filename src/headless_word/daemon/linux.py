@@ -26,7 +26,7 @@ def _find_uno_python() -> str:
     """Find a Python interpreter that can import the ``uno`` module.
 
     Preference order:
-    1. LibreOffice's bundled Python (same build as the UNO C++ bridge –
+    1. LibreOffice's bundled Python (same build as the UNO C++ bridge -
        avoids version-mismatch crashes such as
        "Binary URP bridge disposed during call").
     2. The system ``/usr/bin/python3`` (works when the distro ships
@@ -43,7 +43,8 @@ def _find_uno_python() -> str:
             try:
                 r = subprocess.run(
                     [str(lo_python), "-c", "import uno"],
-                    capture_output=True, timeout=5,
+                    capture_output=True,
+                    timeout=5,
                 )
                 if r.returncode == 0:
                     return str(lo_python)
@@ -54,7 +55,8 @@ def _find_uno_python() -> str:
     try:
         r = subprocess.run(
             ["/usr/bin/python3", "-c", "import uno"],
-            capture_output=True, timeout=5,
+            capture_output=True,
+            timeout=5,
         )
         if r.returncode == 0:
             return "/usr/bin/python3"
