@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Enable Ubuntu backports
+        run: |
+          echo 'deb http://archive.ubuntu.com/ubuntu noble-backports main universe' | sudo tee /etc/apt/sources.list.d/noble-backports.list
+          sudo apt-get update
+
+      - name: Install pinned LibreOffice + screenshot deps
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            libreoffice-writer=4:25.8.5-0ubuntu0.25.10.1~bpo24.04.1 \
+            libreoffice-base-core=4:25.8.5-0ubuntu0.25.10.1~bpo24.04.1 \
+            libreoffice-core=4:25.8.5-0ubuntu0.25.10.1~bpo24.04.1 \
+            libreoffice-common=4:25.8.5-0ubuntu0.25.10.1~bpo24.04.1 \
+            libreoffice-script-provider-python=4:25.8.5-0ubuntu0.25.10.1~bpo24.04.1 \
+            python3-uno=4:25.8.5-0ubuntu0.25.10.1~bpo24.04.1 \
+            poppler-utils
+          soffice --version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run integration tests
+        run: uv run pytest -v --cov=src --cov-report=term-missing
