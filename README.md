@@ -8,7 +8,7 @@ Word document automation via LibreOffice for headless environments.
 uv tool install headless-word
 ```
 
-## Claude Code Skill
+## Agent Skill
 
 ```bash
 npx skills add hewliyang/headless-word
