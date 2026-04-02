@@ -14,5 +14,5 @@ jobs:
 
       - name: Build and run tests
         run: |
-          docker build -t headless-word-test .
+          docker build -f dockerfile.test -t headless-word-test .
           docker run --rm headless-word-test
