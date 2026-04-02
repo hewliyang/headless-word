@@ -8,7 +8,7 @@ description: "Creating & editing Word documents (.docx) via CLI. Use when the us
 ## Setup
 
 ```bash
-which headless-word 2>/dev/null || pip install headless-word
+which headless-word 2>/dev/null || uv tool install headless-word
 ```
 
 Requires LibreOffice installed:
