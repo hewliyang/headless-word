@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -30,7 +31,7 @@ def cli_env(tmp_path_factory: pytest.TempPathFactory) -> dict[str, str]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def libreoffice_daemon(cli_env: dict[str, str]) -> None:
+def libreoffice_daemon(cli_env: dict[str, str]) -> Iterator[None]:
     result = run_cli("start", "--timeout", "30", env=cli_env, check=False)
     if result.returncode != 0:
         raise RuntimeError(
@@ -48,7 +49,7 @@ def docx_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def populated_session(docx_path: Path, cli_env: dict[str, str]) -> dict[str, str]:
+def populated_session(docx_path: Path, cli_env: dict[str, str]) -> Iterator[dict[str, str]]:
     new_result = run_cli("new", str(docx_path), env=cli_env)
     session_id = json.loads(new_result.stdout)["session_id"]
 
